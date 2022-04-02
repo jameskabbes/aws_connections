@@ -1,12 +1,8 @@
-import boto3
-
 ###import other analytics packages
-import py_starter as ps   
-import dir_ops as do      
-import AWS_Creds         
-import boto3_funcs as b3f
+import py_starter.py_starter as ps   
+import dir_ops.dir_ops as do      
 
-####
+from aws_connections import boto3_funcs as b3f
 
 def get_resource(*args, **kwargs):
     return b3f.get_resource( 's3', *args, **kwargs )
