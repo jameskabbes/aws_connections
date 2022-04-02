@@ -13,7 +13,6 @@ def import_credentials( path, role, set_creds = True):
 
     '''
     path is the filepath to aws_creds.txt
-    role should look like this -> 721818040399_aap-datasci-ic-stl
     '''
 
     Cred = AWS_Creds.import_Cred( role, path = path )

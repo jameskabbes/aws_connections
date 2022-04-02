@@ -1,9 +1,9 @@
 import boto3
 
 ###import other analytics packages
-import py_starter as ps   #github.ameren.com/iCenter/Analytics-Packages
-import dir_ops as do      #github.ameren.com/iCenter/Analytics-Packages
-import AWS_Creds          #github.ameren.com/iCenter/AWS-Credentials
+import py_starter as ps   
+import dir_ops as do      
+import AWS_Creds         
 import boto3_funcs as b3f
 
 ####
@@ -114,8 +114,7 @@ def add_s3n_to_key(key):
 
 def s3_url_to_bucket_and_key( s3_url ):
 
-    '''Given an s3_url (next line), return the bucket and S3 key
-    s3://aee-analytics-tools-dev-in-il/Data_Team_Test/James/james_file.txt'''
+    '''Given an s3_url (next line), return the bucket and S3 key'''
 
     s3_url = s3_url[5:]
     dirs = do.path_to_dirs( s3_url )
