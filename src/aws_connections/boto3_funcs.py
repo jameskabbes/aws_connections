@@ -1,5 +1,5 @@
 import boto3
-import AWS_Creds
+from aws_credentials import AWS_Creds 
 
 def get_resource( *args, **kwargs ):
 
