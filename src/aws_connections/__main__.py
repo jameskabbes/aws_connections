@@ -1,7 +1,5 @@
-import sys
-sys_args = sys.argv[1:]
+import aws_connections
+aws_connections._Dir.print_atts()
 
-def run( *sys_args ):
-    print ('Running main for aws_connections')
-
-run( *sys_args )
+import aws_connections.s3 as s3f
+print ( s3f.add_s3n_to_key( 'TEST_S3_KEY' ) )
