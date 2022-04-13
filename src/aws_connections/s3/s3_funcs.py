@@ -1,8 +1,7 @@
-###import other analytics packages
-import py_starter.py_starter as ps   
-import dir_ops.dir_ops as do      
+import py_starter as ps   
+import dir_ops as do      
 
-from aws_connections import boto3_funcs as b3f
+import aws_connections.boto3_funcs as b3f
 
 def get_resource(*args, **kwargs):
     return b3f.get_resource( 's3', *args, **kwargs )
@@ -140,7 +139,3 @@ def delete_file(bucket, key, override = False, print_off = False):
         if print_off:
             print ('Deleting ' + key + '...')
         client.delete_object(Bucket = bucket, Key = key)
-
-def import_credentials( path, role, set_creds = True):
-
-    return b3f.import_credentials( path, role, set_creds = set_creds )
