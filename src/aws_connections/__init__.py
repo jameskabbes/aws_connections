@@ -1,4 +1,4 @@
-from . import boto3_funcs, s3
+from .Connection import Connection
 
 import dir_ops as do
 import os
@@ -9,5 +9,6 @@ _repo_Dir = _src_Dir.ascend()
 _cwd_Dir = do.Dir( do.get_cwd() )
 
 
-
 cred_dict = {}
+
+from . import s3 
