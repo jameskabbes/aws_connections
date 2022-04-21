@@ -1,6 +1,8 @@
 from __future__ import annotations
+from os import stat
+
+from matplotlib.style import reload_library
 import dir_ops as do
-from dir_ops.dir_ops import instance_method
 import py_starter as ps
 import aws_connections
 from aws_connections import s3
@@ -14,6 +16,65 @@ def set_connection( **kwargs ):
     joined_kwargs = ps.merge_dicts( DEFAULT_KWARGS, kwargs )
 
     s3.conn = aws_connections.Connection( 's3', **joined_kwargs )
+
+def download_wrap( method ):
+
+    @functools.wraps( method )
+    def wrapper( self, *args, override: bool = False, print_off: bool = False, 
+                    Destination = None, destination = None, **kwargs  ):
+
+        #whether this is a Dir or a Path, create the parents before copying        
+        if Destination == None:
+            if self.type_path:
+                Destination = do.Path( destination )
+            if self.type_dir:
+                Destination = do.Dir( destination )
+
+        Destination.create_parents()
+
+        #check to make sure the user wants to do this
+        if not override:
+            do.print_to_from( True, 'Downloading', str(self), str(Destination) )
+            override = ps.confirm_raw( string = '' )
+
+        # perform the actual method        
+        if override:
+            do.print_to_from( print_off, 'Downloading', str(self), str(Destination) )
+
+            if method( self, *args, destination = Destination.path, override=override, print_off=print_off, **kwargs ):
+                return True
+
+        return False
+
+    return wrapper
+
+def upload_wrap( method ):
+
+    @functools.wraps( method )
+    def wrapper( self, *args, override: bool = False, print_off: bool = False, 
+                    Destination = None, destination = None, **kwargs  ):
+
+        if Destination == None:
+            if self.type_path:
+                Destination = do.Path( destination )
+            if self.type_dir:
+                Destination = do.Dir( destination )
+
+        #check to make sure the user wants to do this
+        if not override:
+            do.print_to_from( True, 'Uploading', str(Destination), str(self) )
+            override = ps.confirm_raw( string = '' )
+
+        # perform the actual method        
+        if override:
+            do.print_to_from( print_off, 'Uploading', str(Destination), str(self) )
+
+            if method( self, *args, destination = Destination.path, override=override, print_off=print_off, **kwargs ):
+                return True
+
+        return False
+
+    return wrapper
 
 def s3instance_method(method):
 
@@ -32,6 +93,7 @@ def s3instance_method(method):
 class S3Dir( do.Dir ):
 
     STATIC_METHOD_SUFFIX = '_dir'
+    INSTANCE_METHOD_ATTS = ['bucket','path','conn']
 
     DEFAULT_KWARGS = {
         'uri': None,
@@ -76,8 +138,10 @@ class S3Dir( do.Dir ):
             self.uri = S3Dir.join_uri( self.bucket, self.Path.p )
 
         do.Dir.__init__( self, self.path )
-        self.PATHS_CLASS = S3Paths
         self.DIR_CLASS = S3Dir
+        self.PATH_CLASS = S3Path
+        self.DIRS_CLASS = S3Dirs
+        self.PATHS_CLASS = S3Paths
 
     def __eq__( self, other_S3Dir ):
 
@@ -116,6 +180,79 @@ class S3Dir( do.Dir ):
         uri = S3Dir.URI_PREFIX + bucket + '/' + path
         return uri
 
+    @staticmethod
+    def get_size_dir( bucket: str, path: str, conn: aws_connections.Connection,
+                    *args, **kwargs ):
+
+        self = S3Dir( bucket = bucket, path = path, conn = conn )
+        Paths_inst = self.list_contents_Paths( block_dirs=True, block_paths=False )
+
+        Paths_inst.print_atts()
+
+        bytes = 0
+        for Path_inst in Paths_inst:
+            Path_inst.get_size( conversion = None )
+            bytes += Path_inst.size 
+        
+        return do.convert_bytes( bytes, **kwargs )
+
+    @staticmethod
+    def remove_dir( bucket: str, path: str, conn: aws_connections.Connection,
+                    *args, **kwargs ):
+
+        try:
+            conn.resource.Bucket( bucket ).objects.filter( Prefix = path ).delete()
+        except:
+            return False
+        return True
+
+    @staticmethod
+    def copy_dir( bucket: str, path: str, conn: aws_connections.Connection, *args, 
+                    destination: str = '', destination_bucket = None, **kwargs ):
+
+        remote_Dir = S3Dir( bucket = bucket, path = path )
+        remote_Paths = remote_Dir.walk_contents_Paths( block_dirs=True )
+
+        for remote_Path in remote_Paths:
+            rel_Path = remote_Path.get_rel( remote_Dir )
+            destination_path = do.join( destination, rel_Path.path )
+            remote_Path.copy( *args, destination = destination_path, **kwargs ) 
+
+    @upload_wrap
+    @do.inherited_instance_method
+    def upload( self, *args, **kwargs ):
+        pass
+
+    @staticmethod
+    def upload_dir( bucket: str, path: str, conn: aws_connections.Connection, *args,
+                        destination: str = '', **kwargs ):
+        
+        local_Dir = do.Dir( destination )
+        local_Paths = local_Dir.walk_contents_Paths( block_dirs=True )
+
+        for local_Path in local_Paths:
+            rel_Path = local_Path.get_rel( local_Dir )
+            remote_Path = S3Path( bucket = bucket, path = do.join( path, rel_Path.path ) )
+            remote_Path.upload( *args, Destination = local_Path, **kwargs )
+
+    @download_wrap
+    @do.inherited_instance_method
+    def download( self, *args, **kwargs ):
+        pass
+    
+    @staticmethod
+    def download_dir( bucket: str, path: str, conn: aws_connections.Connection, *args,
+                        destination: str = '', **kwargs ):
+
+        remote_Dir = S3Dir( bucket = bucket, path = path )
+        remote_Paths = remote_Dir.walk_contents_Paths( block_dirs=True )
+        local_Dir = do.Dir( destination )
+        
+        for remote_Path in remote_Paths:
+            rel_Path = remote_Path.get_rel( remote_Dir )
+            local_Path = do.Path( local_Dir.join( rel_Path.path ) )
+            remote_Path.download( *args, Destination = local_Path, **kwargs )
+        
     @s3instance_method
     def list_subfolders( self, *args, **kwargs ):
         pass
@@ -158,7 +295,8 @@ class S3Dir( do.Dir ):
             for file_dict in response['Contents']:
                 filenames.append(file_dict['Key'])
         except:
-            print ('S3 Location ' + str(self.uri) + ' does not exist')
+            #print ('S3 Location ' + str(self.uri) + ' does not contain any files')
+            pass
 
         # Note: this will be incredibly inefficient for "walking". Need to redesign this structure for a more customized S3 approach
         if remove_lower_subfolders:
@@ -209,80 +347,59 @@ class S3Dir( do.Dir ):
            
         return Paths_inst
 
+    def create_parents(self):
+        pass
 
 
 class S3Path( S3Dir, do.Path ):
 
     STATIC_METHOD_SUFFIX = '_path'
+    INSTANCE_METHOD_ATTS = ['bucket','path','conn']
 
     def __init__( self, *args, **kwargs ) :
 
         S3Dir.__init__( self, *args, **kwargs )
         do.Path.__init__( self, self.path )
-        self.PATHS_CLASS = S3Paths
+        #S3Dir.__init__( self, *args, **kwargs )
+
         self.DIR_CLASS = S3Dir
+        self.PATH_CLASS = S3Path
+        self.DIRS_CLASS = S3Dirs
+        self.PATHS_CLASS = S3Paths
 
-    @s3instance_method
-    def upload( self, *args, **kwargs ):
-        pass
+    def print_imp_atts(self, **kwargs):
 
-    @staticmethod
-    def upload_path( bucket: str, path: str, conn: aws_connections.Connection,
-                        local_Path: do.Path = None, local_path: str = None ):
-
-        if do.Path.is_Path( local_Path ):
-            local_path = local_Path.path
-
-        conn.resource.meta.client.upload_file(local_path, bucket, path)
-
-    @s3instance_method
-    def download( self, *args, **kwargs ):
-        pass
+        return self._print_imp_atts_helper( atts = ['uri','dirs','ending','size'], **kwargs )
 
     @staticmethod
-    def download_path( bucket: str, path: str, conn: aws_connections.Connection,
-                        local_Path: do.Path = None, local_path: str = None ):
-
-        if do.Path.is_Path( local_Path ):
-            local_path = local_Path.path
-
-        conn.resource.meta.client.download_file(bucket, path, local_path)
-
-    @s3instance_method
-    def remove( self, *args, **kwargs ):
-        pass
+    def upload_path( bucket: str, path: str, conn: aws_connections.Connection, *args,
+                        destination: str = '', **kwargs):
+    
+        conn.resource.meta.client.upload_file( destination, bucket, path)
 
     @staticmethod
-    def remove_path( bucket: str, path: str, conn: aws_connections.Connection,
+    def download_path( bucket: str, path: str, conn: aws_connections.Connection, *args,
+                        destination: str = '', **kwargs ):
+
+        if destination == '':
+            destination = aws_connections._cwd_Dir.join( do.Path.get_filename( path ) )
+
+        conn.resource.meta.client.download_file(bucket, path, destination)
+
+    @staticmethod
+    def remove_path( bucket: str, path: str, conn: aws_connections.Connection, 
                         override: bool = False, print_off: bool = True ) -> bool:
 
         """deletes file at path: BE CAREFUL"""
 
-        inp = 'delete'
-        if not override:
-            inp = input('Type "delete" to delete ' + str(path) + ': ')
-
-        if inp == 'delete':
-
-            if print_off:
-                print ('Deleting file ' + str(path))
-            try:
-                conn.client.delete_object( Bucket = bucket, Key = path )
-            except:
-                return False
-            return True
-        return False
-
-    def get_size( self, *args, **kwargs ):
-
-        """get the size of the path"""
-
-        converted_size, conversion = self.get_size_path( self.bucket, self.path, self.conn, *args, **kwargs )
-        self.size = converted_size
-        self.size_units = conversion
+        try:
+            conn.client.delete_object( Bucket = bucket, Key = path )
+        except:
+            return False
+        return True
 
     @staticmethod
-    def get_size_path( bucket: str, path: str, conn: aws_connections.Connection, 
+    def get_size_path( bucket: str, path: str, conn: aws_connections.Connection,
                         **kwargs ) -> Tuple[ float, str ]:
 
         """get the size of the S3Path"""
@@ -291,46 +408,78 @@ class S3Path( S3Dir, do.Path ):
         bytes = response['ContentLength']
         return do.convert_bytes( bytes, **kwargs )
 
-    def write( self, *args, **kwargs):
-       
-        temp_Path = do.Path( self.filename )
+    @staticmethod
+    def write_path( *static_method_args, **kwargs):
+
+        """write to a local file, then upload to S3"""
+
+        temp_Path = do.Path( 'TEMP' )
         temp_Path.write( **kwargs )
 
-        self.upload( local_Path = temp_Path )
+        S3Path.upload_path( *static_method_args, local_Path = temp_Path )
 
         temp_Path.remove( override = True )
 
-    def create( self, *args, string = '', **kwargs ):
+    @staticmethod
+    def create_path( *static_method_args, string = '', **kwargs):
 
-        self.write( string = '', **kwargs )
+        """write a blank string to the file location"""
 
-    def read( self, *args, **kwargs):
+        S3Path.write_path( *static_method_args, string = string, **kwargs )
 
-        temp_Path = do.Path( self.filename )
-        self.download( local_Path = temp_Path )
+    @staticmethod
+    def read_path( *static_method_args, **kwargs ):
+
+        """download the s3 file to a local path and read the contents"""
+
+        temp_Path = do.Path( 'TEMP' )
+        S3Path.download_path( *static_method_args, local_Path = temp_Path )
 
         contents = temp_Path.read( **kwargs )
-
         temp_Path.remove( override = True )
+        
         return contents
+
+    @staticmethod
+    def copy_path( bucket: str, path: str, conn: aws_connections.Connection, *args,
+                    destination: str = '', destination_bucket = None, **kwargs ):
+
+        copy_source = {
+            'Bucket': bucket,
+            'Key': path
+        }
+
+        # default to using the same bucket as the current place
+        if destination_bucket == None:
+            destination_bucket = bucket
+
+        # perform the copy
+        conn.resource.meta.client.copy( copy_source, destination_bucket, destination )
 
 
 class S3Dirs( do.Dirs ):
 
+    INSTANCE_METHOD_ATTS = ['bucket','path','conn']
+
     def __init__( self ):
 
         do.Dirs.__init__( self )
-        self.PATHS_CLASS = S3Paths
         self.DIR_CLASS = S3Dir
+        self.PATH_CLASS = S3Path
+        self.DIRS_CLASS = S3Dirs
+        self.PATHS_CLASS = S3Paths
 
 class S3Paths( S3Dirs ):
 
+    INSTANCE_METHOD_ATTS = ['bucket','path','conn']
 
     def __init__( self ):
 
         S3Dirs.__init__( self )
-        self.PATHS_CLASS = S3Paths
         self.DIR_CLASS = S3Dir
+        self.PATH_CLASS = S3Path
+        self.DIRS_CLASS = S3Dirs
+        self.PATHS_CLASS = S3Paths
 
 
 
