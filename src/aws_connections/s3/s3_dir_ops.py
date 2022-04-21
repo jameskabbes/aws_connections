@@ -1,7 +1,4 @@
 from __future__ import annotations
-from os import stat
-
-from matplotlib.style import reload_library
 import dir_ops as do
 import py_starter as ps
 import aws_connections
