@@ -178,6 +178,11 @@ class S3Dir( do.Dir ):
         return uri
 
     @staticmethod
+    def exists_dir( bucket: str, path: str, conn: aws_connections.Connection, **kwargs ):
+        
+        return 'CommonPrefixes' in conn.client.list_objects_v2( Bucket = bucket, Prefix = path, Delimiter = '/', MaxKeys=1 )
+
+    @staticmethod
     def get_size_dir( bucket: str, path: str, conn: aws_connections.Connection,
                     *args, **kwargs ):
 
@@ -283,7 +288,7 @@ class S3Dir( do.Dir ):
         if prefix != '':
             prefix += '/'
 
-        response = self.conn.client.list_objects_v2(Bucket = self.bucket, Prefix = prefix, Delimiter = '/')
+        response = self.conn.client.list_objects_v2(Bucket = self.bucket, Prefix = prefix, Delimiter = '/', **kwargs)
 
         filenames = []
 
@@ -367,6 +372,15 @@ class S3Path( S3Dir, do.Path ):
     def print_imp_atts(self, **kwargs):
 
         return self._print_imp_atts_helper( atts = ['uri','dirs','ending','size'], **kwargs )
+
+    @staticmethod
+    def exists_path(bucket: str, path: str, conn: aws_connections.Connection, *args, **kwargs):
+
+        try:
+            conn.resource.Object( bucket, path ).load()
+        except:
+            return False
+        return True
 
     @staticmethod
     def upload_path( bucket: str, path: str, conn: aws_connections.Connection, *args,
