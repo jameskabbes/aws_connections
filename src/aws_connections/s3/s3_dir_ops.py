@@ -171,7 +171,7 @@ class S3Dir( do.RemoteDir ):
     def download_dir( bucket: str, path: str, conn: aws_connections.Connection, *args,
                         destination: str = '', **kwargs ):
 
-        remote_Dir = S3Dir( bucket = bucket, path = path )
+        remote_Dir = S3Dir( bucket = bucket, path = path, conn = conn )
         remote_Paths = remote_Dir.walk_contents_Paths( block_dirs=True )
         local_Dir = do.Dir( destination )
         
