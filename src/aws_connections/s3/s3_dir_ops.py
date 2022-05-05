@@ -186,21 +186,19 @@ class S3Dir( do.RemoteDir ):
     
     @staticmethod
     def list_subfolders_dir(bucket: str, path: str, conn: aws_connections.Connection,
-                            print_off: bool = False ) -> List[ str ]:
+                            print_off: bool = False, **kwargs ) -> List[ str ]:
 
         prefix = path
         if prefix != '':
             prefix += '/'
 
-        result = conn.client.list_objects(Bucket=bucket, Prefix=prefix, Delimiter='/')
-    
+        result = conn.client.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/', **kwargs )
+
         subfolders = []
-        try:
-            for i in result.get('CommonPrefixes'):
-                subfolders.append(i.get('Prefix'))
-                
-        except:
-            pass
+        if 'CommonPrefixes' in result:
+            for common_prefix in result[ 'CommonPrefixes' ]:
+                full_dir = common_prefix[ 'Prefix' ]
+                subfolders.append( S3Dir.get_rel_dir( full_dir, prefix ) )
 
         if print_off:
             ps.print_for_loop( subfolders )
@@ -209,7 +207,7 @@ class S3Dir( do.RemoteDir ):
 
     @staticmethod
     def list_files_dir( bucket: str, path: str, conn: aws_connections.Connection, 
-                     print_off: bool = False, remove_root: bool = True, remove_lower_subfolders: bool = True, **kwargs ):
+                     print_off: bool = False, **kwargs ):
 
         self = S3Dir( bucket = bucket, path = path, conn = conn )
 
@@ -217,34 +215,18 @@ class S3Dir( do.RemoteDir ):
         if prefix != '':
             prefix += '/'
 
-        response = self.conn.client.list_objects_v2(Bucket = self.bucket, Prefix = prefix, Delimiter = '/', **kwargs)
+        result = self.conn.client.list_objects_v2(Bucket = self.bucket, Prefix = prefix, Delimiter = '/', **kwargs)
 
         filenames = []
-
-        # 1. Add all files immediately underneath
-        try:
-            for file_dict in response['Contents']:
-                filenames.append(file_dict['Key'])
-        except:
-            pass
-
-        # Note: this will be incredibly inefficient for "walking". Need to redesign this structure for a more customized S3 approach
-        if remove_lower_subfolders:
-            for i in range(len(filenames)-1, -1, -1):
-
-                # if the filename is from a lower subfolder, remove it
-                if len(self.get_rel( do.Dir( filenames[i] ) ).dirs) > 1:
-                    del filenames[i]
-
-        # list_objects_v2() also lists the root directory as a path
-        if prefix in filenames and remove_root:
-            del filenames[ filenames.index( prefix ) ]
+        if 'Contents' in result:
+            for key in result['Contents']:
+                S3Path_inst = S3Path( bucket = bucket, path = key['Key'], conn = conn ) #full Path
+                filenames.append( S3Path_inst.get_rel( self ).path )        
 
         if print_off:
             ps.print_for_loop( filenames )
 
         return filenames
-
 
 
 class S3Path( S3Dir, do.RemotePath ):
