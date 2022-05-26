@@ -161,7 +161,7 @@ class S3Dir( do.RemoteDir ):
         valid = True
         for local_Path in local_Paths:
             rel_Path = local_Path.get_rel( local_Dir )
-            remote_Path = S3Path( bucket = bucket, path = do.join( path, rel_Path.path ) )
+            remote_Path = S3Path( bucket = bucket, path = do.join( path, rel_Path.path ), conn = conn )
             if not remote_Path.upload( *args, Destination = local_Path, **kwargs ):
                 valid = False
 
