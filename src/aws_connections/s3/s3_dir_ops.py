@@ -114,7 +114,7 @@ class S3Dir( do.RemoteDir ):
     @staticmethod
     def exists_dir( bucket: str, path: str, conn: aws_connections.Connection, **kwargs ):
         
-        return 'CommonPrefixes' in conn.client.list_objects_v2( Bucket = bucket, Prefix = path, Delimiter = '/', MaxKeys=1 )
+        assert 'CommonPrefixes' in conn.client.list_objects_v2( Bucket = bucket, Prefix = path, Delimiter = '/', MaxKeys=1 )
 
     @staticmethod
     def get_size_dir( bucket: str, path: str, conn: aws_connections.Connection,
