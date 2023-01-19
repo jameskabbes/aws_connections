@@ -1,5 +1,4 @@
 from __future__ import annotations
-from operator import sub
 import dir_ops as do
 import py_starter as ps
 import aws_connections
