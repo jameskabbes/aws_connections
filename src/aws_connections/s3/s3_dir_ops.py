@@ -188,17 +188,41 @@ class S3Dir( do.RemoteDir ):
     def list_subfolders_dir(bucket: str, path: str, conn: aws_connections.Connection,
                             print_off: bool = False, **kwargs ) -> List[ str ]:
 
+        default_kwargs = { 'MaxKeys': 1000 }
+        kwargs = ps.merge_dicts( default_kwargs, kwargs )
+
         prefix = path
         if prefix != '':
             prefix += '/'
 
-        result = conn.client.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/', **kwargs )
-
         subfolders = []
-        if 'CommonPrefixes' in result:
-            for common_prefix in result[ 'CommonPrefixes' ]:
-                full_dir = common_prefix[ 'Prefix' ]
-                subfolders.append( S3Dir.get_rel_dir( full_dir, prefix ) )
+
+        #Have to use a specific method to get all files underneath
+        if kwargs['MaxKeys'] > 1000: 
+            
+            all_keys = []
+            Bucket = conn.resource.Bucket( bucket )
+            for obj in Bucket.objects.filter( Prefix = prefix ):
+                all_keys.append( obj.key )
+   
+            rel_keys = [ S3Dir.get_rel_dir( key, prefix ) for key in all_keys ]
+            for rel_key in rel_keys:
+
+                #this means it is a Dir, not a path                
+                dirs = do.path_to_dirs( rel_key )
+                if len( dirs ) > 1:
+                    subfolders.append( dirs[0] )
+
+            subfolders = list(set(subfolders))
+
+        # Use the builtin method which can only handle 1,000 keys
+        else:
+            result = conn.client.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/', **kwargs )
+
+            if 'CommonPrefixes' in result:
+                for common_prefix in result[ 'CommonPrefixes' ]:
+                    full_dir = common_prefix[ 'Prefix' ]
+                    subfolders.append( S3Dir.get_rel_dir( full_dir, prefix ) )
 
         if print_off:
             ps.print_for_loop( subfolders )
@@ -209,22 +233,45 @@ class S3Dir( do.RemoteDir ):
     def list_files_dir( bucket: str, path: str, conn: aws_connections.Connection, 
                      print_off: bool = False, **kwargs ):
 
+        default_kwargs = { 'MaxKeys': 1000 }
+        kwargs = ps.merge_dicts( default_kwargs, kwargs )
+
         self = S3Dir( bucket = bucket, path = path, conn = conn )
 
         prefix = self.Path.path
         if prefix != '':
             prefix += '/'
 
-        result = self.conn.client.list_objects_v2(Bucket = self.bucket, Prefix = prefix, Delimiter = '/', **kwargs)
-
         filenames = []
-        if 'Contents' in result:
-            for key in result['Contents']:
-                S3Path_inst = S3Path( bucket = bucket, path = key['Key'], conn = conn ) #full Path
-                filenames.append( S3Path_inst.get_rel( self ).path )        
 
-        if print_off:
-            ps.print_for_loop( filenames )
+        if kwargs['MaxKeys'] > 1000:
+            
+            all_keys = []
+            Bucket = conn.resource.Bucket( bucket )
+            for obj in Bucket.objects.filter( Prefix = prefix ):
+                all_keys.append( obj.key )
+
+            rel_keys = [ S3Dir.get_rel_dir( key, prefix ) for key in all_keys ]
+            for rel_key in rel_keys:
+
+                #this means it is a path, not a dir
+                dirs = do.path_to_dirs( rel_key )
+                if len( dirs ) == 1:
+                    filenames.append( dirs[0] )
+
+            filenames = list(set(filenames))
+
+        else:
+
+            result = self.conn.client.list_objects_v2(Bucket = self.bucket, Prefix = prefix, Delimiter = '/', **kwargs)
+
+            if 'Contents' in result:
+                for key in result['Contents']:
+                    S3Path_inst = S3Path( bucket = bucket, path = key['Key'], conn = conn ) #full Path
+                    filenames.append( S3Path_inst.get_rel( self ).path )        
+
+            if print_off:
+                ps.print_for_loop( filenames )
 
         return filenames
 
