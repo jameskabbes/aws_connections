@@ -1,8 +1,8 @@
-[GitHub Pages](https://jameskabbes.github.io/aws_connections)<br>
-[PyPI](https://pypi.org/project/kabbes-aws-connections)
-
 # aws_connections
 Package for easy connections to AWS based on the boto3 library
+
+[Documentation](https://jameskabbes.github.io/aws_connections)<br>
+[PyPI](https://pypi.org/project/kabbes-aws-connections)
 
 <br> 
 
