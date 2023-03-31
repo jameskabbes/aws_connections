@@ -1,0 +1,37 @@
+aws\_connections package
+========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   aws_connections.s3
+
+Submodules
+----------
+
+aws\_connections.Client module
+------------------------------
+
+.. automodule:: aws_connections.Client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+aws\_connections.Connection module
+----------------------------------
+
+.. automodule:: aws_connections.Connection
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: aws_connections
+   :members:
+   :undoc-members:
+   :show-inheritance:

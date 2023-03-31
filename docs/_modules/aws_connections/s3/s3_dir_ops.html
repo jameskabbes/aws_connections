@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aws_connections.s3.s3_dir_ops &mdash; kabbes_aws_connections 0.8.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            kabbes_aws_connections
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">kabbes_aws_connections</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aws_connections.s3.s3_dir_ops</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aws_connections.s3.s3_dir_ops</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span> <span class="nn">dir_ops</span> <span class="k">as</span> <span class="nn">do</span>
+<span class="kn">import</span> <span class="nn">py_starter</span> <span class="k">as</span> <span class="nn">ps</span>
+<span class="kn">import</span> <span class="nn">aws_connections</span>
+<span class="kn">from</span> <span class="nn">aws_connections</span> <span class="kn">import</span> <span class="n">s3</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+
+<div class="viewcode-block" id="set_connection"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.set_connection">[docs]</a><span class="k">def</span> <span class="nf">set_connection</span><span class="p">(</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+    <span class="n">DEFAULT_KWARGS</span> <span class="o">=</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">cred_dict</span>
+    <span class="n">joined_kwargs</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span> <span class="n">DEFAULT_KWARGS</span><span class="p">,</span> <span class="n">kwargs</span> <span class="p">)</span>
+
+    <span class="n">s3</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">(</span> <span class="s1">&#39;s3&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">joined_kwargs</span> <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="S3Dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir">[docs]</a><span class="k">class</span> <span class="nc">S3Dir</span><span class="p">(</span> <span class="n">do</span><span class="o">.</span><span class="n">RemoteDir</span> <span class="p">):</span>
+
+    <span class="n">STATIC_METHOD_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;_dir&#39;</span>
+    <span class="n">INSTANCE_METHOD_ATTS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bucket&#39;</span><span class="p">,</span><span class="s1">&#39;path&#39;</span><span class="p">,</span><span class="s1">&#39;conn&#39;</span><span class="p">]</span>
+
+    <span class="n">DEFAULT_KWARGS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;bucket&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;Path&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>   <span class="c1"># is synonomous with an S3 Key</span>
+        <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;conn&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">URI_PREFIX</span> <span class="o">=</span> <span class="s1">&#39;s3://&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">joined_atts</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">DEFAULT_KWARGS</span><span class="p">,</span> <span class="n">kwargs</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_atts</span><span class="p">(</span> <span class="n">joined_atts</span> <span class="p">)</span>
+
+        <span class="c1"># set the connection</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">s3</span><span class="o">.</span><span class="n">conn</span>
+
+        <span class="c1"># if a uri is found, this takes precedent</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">split_uri</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            
+            <span class="c1"># user must specify a bucket</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="p">(</span><span class="s1">&#39;No bucket was specified&#39;</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="kc">False</span>
+
+            <span class="c1"># first priority is a Do.Path object            </span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Path</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+
+                <span class="c1"># second priority is a path str</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="p">(</span><span class="s1">&#39;No path was specified&#39;</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">join_uri</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">p</span> <span class="p">)</span>
+
+        <span class="n">do</span><span class="o">.</span><span class="n">RemoteDir</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inherited_kwargs</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;bucket&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="s1">&#39;conn&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIR_CLASS</span> <span class="o">=</span> <span class="n">S3Dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATH_CLASS</span> <span class="o">=</span> <span class="n">S3Path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIRS_CLASS</span> <span class="o">=</span> <span class="n">S3Dirs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATHS_CLASS</span> <span class="o">=</span> <span class="n">S3Paths</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="n">other_S3Dir</span> <span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span> <span class="n">other_S3Dir</span><span class="p">,</span> <span class="n">S3Dir</span> <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">==</span> <span class="n">other_S3Dir</span><span class="o">.</span><span class="n">uri</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="S3Dir.print_imp_atts"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.print_imp_atts">[docs]</a>    <span class="k">def</span> <span class="nf">print_imp_atts</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_imp_atts_helper</span><span class="p">(</span> <span class="n">atts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Dir.print_one_line_atts"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.print_one_line_atts">[docs]</a>    <span class="k">def</span> <span class="nf">print_one_line_atts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_one_line_atts_helper</span><span class="p">(</span> <span class="n">atts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">,</span><span class="s1">&#39;uri&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Dir.split_uri"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.split_uri">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">split_uri</span><span class="p">(</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="p">]:</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns bucket and path</span>
+<span class="sd">        uri looks like: &#39;s3://bucketname/path/to/file&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">URI_PREFIX</span> <span class="p">):</span>
+            <span class="n">trimmed_uri</span> <span class="o">=</span> <span class="n">uri</span><span class="p">[</span> <span class="nb">len</span><span class="p">(</span><span class="n">S3Dir</span><span class="o">.</span><span class="n">URI_PREFIX</span><span class="p">)</span> <span class="p">:</span> <span class="p">]</span>
+            <span class="n">dirs</span> <span class="o">=</span> <span class="n">trimmed_uri</span><span class="o">.</span><span class="n">split</span><span class="p">(</span> <span class="s1">&#39;/&#39;</span> <span class="p">)</span>
+
+            <span class="n">bucket</span> <span class="o">=</span> <span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">dirs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span></div>
+
+<div class="viewcode-block" id="S3Dir.join_uri"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.join_uri">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">join_uri</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Given a bucket and a path, generate the S3 uri &quot;&quot;&quot;</span>
+
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">URI_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">path</span>
+        <span class="k">return</span> <span class="n">uri</span></div>
+
+<div class="viewcode-block" id="S3Dir.create_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.create_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_dir</span><span class="p">(</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+        <span class="c1"># It is not possible to create a dir on S3, but we don&#39;t want to throw an exception when it doesn&#39;t work</span>
+        <span class="k">assert</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="S3Dir.exists_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.exists_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">exists_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+        
+        <span class="k">assert</span> <span class="s1">&#39;CommonPrefixes&#39;</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">list_objects_v2</span><span class="p">(</span> <span class="n">Bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">Prefix</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">Delimiter</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">MaxKeys</span><span class="o">=</span><span class="mi">1</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Dir.get_size_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.get_size_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_size_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span>
+                    <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+        <span class="n">Paths_inst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_contents_Paths</span><span class="p">(</span> <span class="n">block_dirs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_paths</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span>
+
+        <span class="nb">bytes</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">Path_inst</span> <span class="ow">in</span> <span class="n">Paths_inst</span><span class="p">:</span>
+            <span class="n">Path_inst</span><span class="o">.</span><span class="n">get_size</span><span class="p">(</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+            <span class="nb">bytes</span> <span class="o">+=</span> <span class="n">Path_inst</span><span class="o">.</span><span class="n">size</span> 
+        
+        <span class="k">return</span> <span class="nb">bytes</span></div>
+
+<div class="viewcode-block" id="S3Dir.remove_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.remove_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">remove_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span> <span class="n">bucket</span> <span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span> <span class="n">Prefix</span> <span class="o">=</span> <span class="n">path</span> <span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="S3Dir.copy_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.copy_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">copy_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> 
+                    <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">destination_bucket</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="n">remote_Dir</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="p">)</span>
+        <span class="n">remote_Paths</span> <span class="o">=</span> <span class="n">remote_Dir</span><span class="o">.</span><span class="n">walk_contents_Paths</span><span class="p">(</span> <span class="n">block_dirs</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+        
+        <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">remote_Path</span> <span class="ow">in</span> <span class="n">remote_Paths</span><span class="p">:</span>
+            <span class="n">rel_Path</span> <span class="o">=</span> <span class="n">remote_Path</span><span class="o">.</span><span class="n">get_rel</span><span class="p">(</span> <span class="n">remote_Dir</span> <span class="p">)</span>
+            <span class="n">destination_path</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">destination</span><span class="p">,</span> <span class="n">rel_Path</span><span class="o">.</span><span class="n">path</span> <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">remote_Path</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">destination</span> <span class="o">=</span> <span class="n">destination_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+                <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
+            
+        <span class="k">assert</span> <span class="n">valid</span></div>
+
+
+<div class="viewcode-block" id="S3Dir.upload_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.upload_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">upload_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                        <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+        
+        <span class="n">local_Dir</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span> <span class="n">destination</span> <span class="p">)</span>
+        <span class="n">local_Paths</span> <span class="o">=</span> <span class="n">local_Dir</span><span class="o">.</span><span class="n">walk_contents_Paths</span><span class="p">(</span> <span class="n">block_dirs</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+
+        <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">local_Path</span> <span class="ow">in</span> <span class="n">local_Paths</span><span class="p">:</span>
+            <span class="n">rel_Path</span> <span class="o">=</span> <span class="n">local_Path</span><span class="o">.</span><span class="n">get_rel</span><span class="p">(</span> <span class="n">local_Dir</span> <span class="p">)</span>
+            <span class="n">remote_Path</span> <span class="o">=</span> <span class="n">S3Path</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">path</span><span class="p">,</span> <span class="n">rel_Path</span><span class="o">.</span><span class="n">path</span> <span class="p">),</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">remote_Path</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">Destination</span> <span class="o">=</span> <span class="n">local_Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+                <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">assert</span> <span class="n">valid</span></div>
+
+<div class="viewcode-block" id="S3Dir.download_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.download_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">download_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                        <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="n">remote_Dir</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+        <span class="n">remote_Paths</span> <span class="o">=</span> <span class="n">remote_Dir</span><span class="o">.</span><span class="n">walk_contents_Paths</span><span class="p">(</span> <span class="n">block_dirs</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+        <span class="n">local_Dir</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span> <span class="n">destination</span> <span class="p">)</span>
+        
+        <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">remote_Path</span> <span class="ow">in</span> <span class="n">remote_Paths</span><span class="p">:</span>
+            <span class="n">rel_Path</span> <span class="o">=</span> <span class="n">remote_Path</span><span class="o">.</span><span class="n">get_rel</span><span class="p">(</span> <span class="n">remote_Dir</span> <span class="p">)</span>
+            <span class="n">local_Path</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span> <span class="n">local_Dir</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">rel_Path</span><span class="o">.</span><span class="n">path</span> <span class="p">)</span> <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">remote_Path</span><span class="o">.</span><span class="n">download</span><span class="p">(</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">Destination</span> <span class="o">=</span> <span class="n">local_Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+                <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">assert</span> <span class="n">valid</span></div>
+    
+<div class="viewcode-block" id="S3Dir.list_subfolders_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.list_subfolders_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">list_subfolders_dir</span><span class="p">(</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span>
+                            <span class="n">print_off</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span> <span class="nb">str</span> <span class="p">]:</span>
+
+        <span class="n">default_kwargs</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;MaxKeys&#39;</span><span class="p">:</span> <span class="mi">1000</span> <span class="p">}</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span> <span class="n">default_kwargs</span><span class="p">,</span> <span class="n">kwargs</span> <span class="p">)</span>
+
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+
+        <span class="n">subfolders</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1">#Have to use a specific method to get all files underneath</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;MaxKeys&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span> 
+            
+            <span class="n">all_keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">Bucket</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span> <span class="n">bucket</span> <span class="p">)</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">Bucket</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span> <span class="n">Prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="p">):</span>
+                <span class="n">all_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">obj</span><span class="o">.</span><span class="n">key</span> <span class="p">)</span>
+   
+            <span class="n">rel_keys</span> <span class="o">=</span> <span class="p">[</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">get_rel_dir</span><span class="p">(</span> <span class="n">key</span><span class="p">,</span> <span class="n">prefix</span> <span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">all_keys</span> <span class="p">]</span>
+            <span class="k">for</span> <span class="n">rel_key</span> <span class="ow">in</span> <span class="n">rel_keys</span><span class="p">:</span>
+
+                <span class="c1">#this means it is a Dir, not a path                </span>
+                <span class="n">dirs</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">path_to_dirs</span><span class="p">(</span> <span class="n">rel_key</span> <span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span> <span class="n">dirs</span> <span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">subfolders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
+
+            <span class="n">subfolders</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">subfolders</span><span class="p">))</span>
+
+        <span class="c1"># Use the builtin method which can only handle 1,000 keys</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">list_objects_v2</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">Delimiter</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;CommonPrefixes&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">common_prefix</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span> <span class="s1">&#39;CommonPrefixes&#39;</span> <span class="p">]:</span>
+                    <span class="n">full_dir</span> <span class="o">=</span> <span class="n">common_prefix</span><span class="p">[</span> <span class="s1">&#39;Prefix&#39;</span> <span class="p">]</span>
+                    <span class="n">subfolders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">get_rel_dir</span><span class="p">(</span> <span class="n">full_dir</span><span class="p">,</span> <span class="n">prefix</span> <span class="p">)</span> <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">print_off</span><span class="p">:</span>
+            <span class="n">ps</span><span class="o">.</span><span class="n">print_for_loop</span><span class="p">(</span> <span class="n">subfolders</span> <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">subfolders</span></div>
+
+<div class="viewcode-block" id="S3Dir.list_files_dir"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dir.list_files_dir">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">list_files_dir</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> 
+                     <span class="n">print_off</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="n">default_kwargs</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;MaxKeys&#39;</span><span class="p">:</span> <span class="mi">1000</span> <span class="p">}</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span> <span class="n">default_kwargs</span><span class="p">,</span> <span class="n">kwargs</span> <span class="p">)</span>
+
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">S3Dir</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+
+        <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+
+        <span class="n">filenames</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;MaxKeys&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+            
+            <span class="n">all_keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">Bucket</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span> <span class="n">bucket</span> <span class="p">)</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">Bucket</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span> <span class="n">Prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="p">):</span>
+                <span class="n">all_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">obj</span><span class="o">.</span><span class="n">key</span> <span class="p">)</span>
+
+            <span class="n">rel_keys</span> <span class="o">=</span> <span class="p">[</span> <span class="n">S3Dir</span><span class="o">.</span><span class="n">get_rel_dir</span><span class="p">(</span> <span class="n">key</span><span class="p">,</span> <span class="n">prefix</span> <span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">all_keys</span> <span class="p">]</span>
+            <span class="k">for</span> <span class="n">rel_key</span> <span class="ow">in</span> <span class="n">rel_keys</span><span class="p">:</span>
+
+                <span class="c1">#this means it is a path, not a dir</span>
+                <span class="n">dirs</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">path_to_dirs</span><span class="p">(</span> <span class="n">rel_key</span> <span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span> <span class="n">dirs</span> <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">filenames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
+
+            <span class="n">filenames</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">filenames</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">list_objects_v2</span><span class="p">(</span><span class="n">Bucket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">Delimiter</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;Contents&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Contents&#39;</span><span class="p">]:</span>
+                    <span class="n">S3Path_inst</span> <span class="o">=</span> <span class="n">S3Path</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s1">&#39;Key&#39;</span><span class="p">],</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span> <span class="c1">#full Path</span>
+                    <span class="n">filenames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">S3Path_inst</span><span class="o">.</span><span class="n">get_rel</span><span class="p">(</span> <span class="bp">self</span> <span class="p">)</span><span class="o">.</span><span class="n">path</span> <span class="p">)</span>        
+
+            <span class="k">if</span> <span class="n">print_off</span><span class="p">:</span>
+                <span class="n">ps</span><span class="o">.</span><span class="n">print_for_loop</span><span class="p">(</span> <span class="n">filenames</span> <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filenames</span></div></div>
+
+
+<div class="viewcode-block" id="S3Path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path">[docs]</a><span class="k">class</span> <span class="nc">S3Path</span><span class="p">(</span> <span class="n">S3Dir</span><span class="p">,</span> <span class="n">do</span><span class="o">.</span><span class="n">RemotePath</span> <span class="p">):</span>
+
+    <span class="n">STATIC_METHOD_SUFFIX</span> <span class="o">=</span> <span class="s1">&#39;_path&#39;</span>
+    <span class="n">INSTANCE_METHOD_ATTS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bucket&#39;</span><span class="p">,</span><span class="s1">&#39;path&#39;</span><span class="p">,</span><span class="s1">&#39;conn&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span> <span class="p">:</span>
+
+        <span class="n">S3Dir</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+        <span class="n">do</span><span class="o">.</span><span class="n">RemotePath</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIR_CLASS</span> <span class="o">=</span> <span class="n">S3Dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATH_CLASS</span> <span class="o">=</span> <span class="n">S3Path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIRS_CLASS</span> <span class="o">=</span> <span class="n">S3Dirs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATHS_CLASS</span> <span class="o">=</span> <span class="n">S3Paths</span>
+
+<div class="viewcode-block" id="S3Path.print_imp_atts"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.print_imp_atts">[docs]</a>    <span class="k">def</span> <span class="nf">print_imp_atts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_imp_atts_helper</span><span class="p">(</span> <span class="n">atts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">,</span><span class="s1">&#39;dirs&#39;</span><span class="p">,</span><span class="s1">&#39;ending&#39;</span><span class="p">,</span><span class="s1">&#39;size&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Path.exists_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.exists_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">exists_path</span><span class="p">(</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="S3Path.upload_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.upload_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">upload_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                        <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span> <span class="n">destination</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Path.download_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.download_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">download_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                        <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">destination</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">destination</span> <span class="o">=</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">_cwd_Dir</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">do</span><span class="o">.</span><span class="n">Path</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span> <span class="n">path</span> <span class="p">)</span> <span class="p">)</span>
+
+        <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Path.remove_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.remove_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">remove_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">delete_object</span><span class="p">(</span> <span class="n">Bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">Key</span> <span class="o">=</span> <span class="n">path</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Path.get_size_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.get_size_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_size_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">head_object</span><span class="p">(</span><span class="n">Bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">Key</span> <span class="o">=</span> <span class="n">path</span><span class="p">)</span>
+        <span class="nb">bytes</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;ContentLength&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">bytes</span></div>
+
+<div class="viewcode-block" id="S3Path.write_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.write_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">write_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;write to a local file, then upload to S3&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">S3Path</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+        <span class="n">temp_Path</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span> <span class="s1">&#39;TEMP&#39;</span> <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">temp_Path</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+            <span class="k">assert</span> <span class="kc">False</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span> <span class="n">Destination</span> <span class="o">=</span> <span class="n">temp_Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+            <span class="k">assert</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">temp_Path</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+            <span class="k">assert</span> <span class="kc">False</span></div>
+    
+<div class="viewcode-block" id="S3Path.create_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.create_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">S3Path</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+            <span class="k">assert</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="S3Path.read_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.read_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">read_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;download the s3 file to a local path and read the contents&quot;&quot;&quot;</span>
+
+        <span class="n">temp_Path</span> <span class="o">=</span> <span class="n">do</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span> <span class="s1">&#39;TEMP&#39;</span> <span class="p">)</span>
+
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">S3Path</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">(</span> <span class="n">Destination</span> <span class="o">=</span> <span class="n">temp_Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+            
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">temp_Path</span><span class="o">.</span><span class="n">read</span><span class="p">(</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+        <span class="n">temp_Path</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span> <span class="n">override</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+                
+        <span class="k">return</span> <span class="n">contents</span></div>
+
+<div class="viewcode-block" id="S3Path.copy_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.copy_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">copy_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                    <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">destination_bucket</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="n">copy_source</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Bucket&#39;</span><span class="p">:</span> <span class="n">bucket</span><span class="p">,</span>
+            <span class="s1">&#39;Key&#39;</span><span class="p">:</span> <span class="n">path</span>
+        <span class="p">}</span>
+
+        <span class="c1"># default to using the same bucket as the current place</span>
+        <span class="k">if</span> <span class="n">destination_bucket</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">destination_bucket</span> <span class="o">=</span> <span class="n">bucket</span>
+
+        <span class="c1"># perform the copy</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span> <span class="n">copy_source</span><span class="p">,</span> <span class="n">destination_bucket</span><span class="p">,</span> <span class="n">destination</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="S3Path.rename_path"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Path.rename_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">rename_path</span><span class="p">(</span> <span class="n">bucket</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">aws_connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                    <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">destination_bucket</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">S3Path</span><span class="p">(</span> <span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span> <span class="n">destination</span> <span class="o">=</span> <span class="n">destination</span><span class="p">,</span> <span class="n">destination_bucket</span> <span class="o">=</span> <span class="n">destination_bucket</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="S3Dirs"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Dirs">[docs]</a><span class="k">class</span> <span class="nc">S3Dirs</span><span class="p">(</span> <span class="n">do</span><span class="o">.</span><span class="n">RemoteDirs</span> <span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="n">do</span><span class="o">.</span><span class="n">RemoteDirs</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIR_CLASS</span> <span class="o">=</span> <span class="n">S3Dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATH_CLASS</span> <span class="o">=</span> <span class="n">S3Path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIRS_CLASS</span> <span class="o">=</span> <span class="n">S3Dirs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATHS_CLASS</span> <span class="o">=</span> <span class="n">S3Paths</span></div>
+
+
+<div class="viewcode-block" id="S3Paths"><a class="viewcode-back" href="../../../aws_connections.s3.html#aws_connections.s3.s3_dir_ops.S3Paths">[docs]</a><span class="k">class</span> <span class="nc">S3Paths</span><span class="p">(</span> <span class="n">S3Dirs</span><span class="p">,</span> <span class="n">do</span><span class="o">.</span><span class="n">RemotePaths</span> <span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">):</span>
+
+        <span class="n">S3Dirs</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span> <span class="p">)</span>
+        <span class="n">do</span><span class="o">.</span><span class="n">RemotePaths</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIR_CLASS</span> <span class="o">=</span> <span class="n">S3Dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATH_CLASS</span> <span class="o">=</span> <span class="n">S3Path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DIRS_CLASS</span> <span class="o">=</span> <span class="n">S3Dirs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PATHS_CLASS</span> <span class="o">=</span> <span class="n">S3Paths</span></div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, James Kabbes.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

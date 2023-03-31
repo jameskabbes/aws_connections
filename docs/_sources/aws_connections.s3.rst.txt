@@ -1,0 +1,21 @@
+aws\_connections.s3 package
+===========================
+
+Submodules
+----------
+
+aws\_connections.s3.s3\_dir\_ops module
+---------------------------------------
+
+.. automodule:: aws_connections.s3.s3_dir_ops
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: aws_connections.s3
+   :members:
+   :undoc-members:
+   :show-inheritance:
